@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "COURSE-SERVICE", configuration = FeignClientConfig.class)
 public interface CourseClient {
-    @PostMapping("/course/name")
+    @PostMapping("courses/course/name")
     public abstract ResponseEntity<CourseDTO> getCourseByName(@RequestBody CourseDTO request);
 }

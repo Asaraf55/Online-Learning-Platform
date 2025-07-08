@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    private String secretKey = "u7pD1Xb2i7Jkz+vQn8s5VtXpKYiBnsY5wtFWmeIoH2I="; // Secret key used for signing JWT
+    private final String secretKey = "u7pD1Xb2i7Jkz+vQn8s5VtXpKYiBnsY5wtFWmeIoH2I="; // Secret key used for signing JWT
 
     // Generate JWT Token
     public String generateToken(String email,String role) {

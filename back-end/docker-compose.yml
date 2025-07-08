@@ -1,138 +1,68 @@
-
 services:
-
   postgres:
     image: postgres:15
-    container_name: postgres
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
-    networks:
-      - backend
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports: ['5432:5432']
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    networks:
-      - backend
+    ports: ['5672:5672','15672:15672']
 
   eureka-server:
-    image: eureka-server
-    build:
-      context: ./Service-registry
-    container_name: eureka-server
-    ports:
-      - "8181:8181"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-    networks:
-      - backend
+    build: ./Service-registry
+    ports: ['8181:8181']
+    depends_on: [postgres]
 
   student-service:
-    image: student-service
-    build:
-      context: ./student-service
-    container_name: student-service
-    ports:
-      - "8081:8081"
+    build: ./student-service
+    ports: ['8081:8081']
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-    depends_on:
-      - postgres
-      - eureka-server
-    networks:
-      - backend
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on: [eureka-server,postgres,rabbitmq]
 
   course-service:
-    image: course-service
-    build:
-      context: ./course-service
-    container_name: course-service
-    ports:
-      - "8082:8082"
+    build: ./course-service
+    ports: ['8082:8082']
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-    depends_on:
-      - postgres
-      - eureka-server
-      - student-service
-    networks:
-      - backend
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on: [eureka-server,postgres,student-service]
 
   enrollment-service:
-    image: enrollment-service
-    build:
-      context: ./Enrollment-Service
-    container_name: enrollment-service
-    ports:
-      - "8083:8083"
+    build: ./enrollment-service
+    ports: ['8083:8083']
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-    depends_on:
-      - postgres
-      - eureka-server
-      - course-service
-      - student-service
-    networks:
-      - backend
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on: [eureka-server,postgres,course-service,student-service]
 
   feedback-service:
-    image: feedback-service
-    build:
-      context: ./Feedback-Service
-    container_name: feedback-service
-    ports:
-      - "8084:8084"
+    build: ./feedback-service
+    ports: ['8084:8084']
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-    depends_on:
-      - postgres
-      - eureka-server
-      - enrollment-service
-    networks:
-      - backend
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on: [eureka-server,postgres,enrollment-service]
 
   notification-service:
-    image: notification-service
-    build:
-      context: ./Notification-Service
-    container_name: notification-service
+    build: ./notification-service
+    ports: ['8085:8085']
     environment:
-       SPRING_PROFILES_ACTIVE: docker
-       MAIL_HOST: smtp.gmail.com
-       MAIL_PORT: 587
-       MAIL_USERNAME: sarbudeen8124@gmail.com
-       MAIL_PASSWORD: ppcyslzsajizeyms
-       MAIL_PROTOCOL: smtp
-      
-    depends_on:
-      - rabbitmq
-      - eureka-server
-    networks:
-      - backend
+      - SPRING_PROFILES_ACTIVE=docker
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=your_email@gmail.com
+      - MAIL_PASSWORD=your_app_pass
+    depends_on: [rabbitmq,eureka-server]
 
   api-gateway:
-    image: api-gateway
-    build:
-      context: ./Api-gateway-service
-    container_name: api-gateway
-    ports:
-      - "8080:8080"
+    build: ./Api-gateway-service
+    ports: ['8080:8080']
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-    depends_on:
-      - eureka-server
-    networks:
-      - backend
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on: [eureka-server]
 
-networks:
-  backend:
-    driver: bridge
+volumes:
+  db-data:

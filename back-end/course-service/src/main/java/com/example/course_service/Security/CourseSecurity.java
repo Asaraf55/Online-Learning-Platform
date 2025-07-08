@@ -32,9 +32,9 @@ public class CourseSecurity{
       return   http
                 .csrf(csrf->csrf.disable())
                 .authorizeHttpRequests(authorizeRequest ->authorizeRequest
-                // Admins can access /admin paths (create, delete courses)
-                .requestMatchers("courses/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST,"courses/course/name").permitAll()
+                        // Admins can access /admin paths (create, delete courses)
+                        .requestMatchers("courses/admin/**").hasAuthority("ADMIN")
                 // Regular users can access the course viewing paths
                 .requestMatchers("/course/").hasAnyAuthority("USER", "ADMIN")
                         .anyRequest()
