@@ -1,13 +1,15 @@
 package com.example.student_service.Service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,8 +17,10 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    private final String secretKey = "u7pD1Xb2i7Jkz+vQn8s5VtXpKYiBnsY5wtFWmeIoH2I="; // Secret key used for signing JWT
-
+    private final String secretKey;// Secret key used for signing JWT
+    public JwtService(@Value("${secretKey}") String secretKey) {
+        this.secretKey = secretKey;
+    }
     // Generate JWT Token
     public String generateToken(String email,String role) {
         Map<String, Object> claims=new HashMap<>();
@@ -33,12 +37,16 @@ public class JwtService {
     }
 
     private SecretKey getkey() {
-        byte[] key= Decoders.BASE64.decode(secretKey);
+        byte[] key=secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(key);
     }
 
     public String extractemail(String token) {
-        return extractClaims(token, Claims::getSubject);
+        try {
+            return extractClaims(token, Claims::getSubject);
+        } catch (JwtException e) {
+            throw new SecurityException("Invalid JWT token", e);
+        }
     }
 
     public String extractRole(String token) {
@@ -60,7 +68,7 @@ public class JwtService {
 
     public boolean validToken(String token, UserDetails userDetails) {
         final String username= extractemail(token);
-        return (username!=null && !isTokenExpired(token));
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     private boolean isTokenExpired(String token) {
